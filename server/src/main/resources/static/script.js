@@ -1,0 +1,5 @@
+(
+    function (display){
+        return display;
+    }
+)();
