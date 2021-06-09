@@ -5,10 +5,11 @@ import models.Student;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,9 +18,9 @@ public class MainClass {
 
 
         ExecutorService executorService = Executors.newCachedThreadPool();
-
-        try (ServerSocket serverSocket = new ServerSocket(5050)) {
-
+        int port = 5050;
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Server running on port "+port);
             while (true) {
                 Socket client = serverSocket.accept();
                 executorService.submit(() -> routing(client));
@@ -43,13 +44,13 @@ public class MainClass {
                     handleGetMethods(resp,url);
                     break;
                 case "HEAD":
-              //      handleHeadMethods(resp,url);
+                //   handleHeadMethods(resp,url);
                     break;
                 case "POST":
-              //      handlePostMethods(resp,url);
+                    handlePostMethods(resp,requestedInput,url);
                     break;
                 default:
-               //     handleNotFound(resp,url);
+              //     handleNotFound(resp,url);
             }
             requestedInput.close();
             resp.close();
@@ -60,6 +61,24 @@ public class MainClass {
         }
     }
 
+    private static void handlePostMethods(OutputStream resp, BufferedReader requestData, String url) throws IOException {
+        Gson gson = new Gson();
+
+
+        HashMap<String,String> requestString = requestBody(requestData);
+
+        Student student = StudentManager.createStudent( requestString.get("name"),requestString.get("tel"),requestString.get("email"),requestString.get("image"));
+
+        String json = gson.toJson(student);
+        String header="";
+        byte[] data = json.getBytes(StandardCharsets.UTF_8);
+        header = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-length: " + data.length + "\r\n\r\n";
+        resp.write(header.getBytes());
+        resp.write(data);
+        resp.flush();
+
+    }
+
     private static void handleGetMethods(OutputStream resp, String url) throws IOException {
         Gson gson = new Gson();
         String header="";
@@ -68,7 +87,7 @@ public class MainClass {
                 List<Student> persons = StudentManager.fetchAll();
                 String json = gson.toJson(persons);
                 byte[] data = json.getBytes(StandardCharsets.UTF_8);
-                 header = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-length: " + data.length + "\r\n\r\n";
+                 header = "HTTP/1.1 201 CREATED\r\nContent-Type: application/json\r\nContent-length: " + data.length + "\r\n\r\n";
                 resp.write(header.getBytes());
                 resp.write(data);
                 resp.flush();
@@ -78,6 +97,7 @@ public class MainClass {
         }
     }
 
+
     private static void sendStaticFile(OutputStream resp,String url) throws IOException {
         String header = "";
         byte[] data = new byte[0];
@@ -86,14 +106,15 @@ public class MainClass {
       String fileName = sections[2];
       System.out.println(fileName);
         if((sections.length!=3) || !sections[1].equals("static")){
-            header = "HTTP/1.1 401 Not Found\r\nContent-length: 0\r\n\r\n";
-            resp.write(("Not Allowed".getBytes(StandardCharsets.UTF_8)));
+            header = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
+            resp.write(header.getBytes());
+            resp.write(("Not Found".getBytes(StandardCharsets.UTF_8)));
             resp.flush();
         }
 
         File f = Path.of("server", "target","web","static",fileName).toFile();
         if (!f.exists() && !f.isDirectory()) {
-            header = "HTTP/1.1 404 Not Found\r\nContent-length: 0\r\n\r\n";
+            header = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
             resp.write(header.getBytes());
             resp.write(("Not Found".getBytes(StandardCharsets.UTF_8)));
             resp.flush();
@@ -134,5 +155,32 @@ public class MainClass {
             }
             return type + " " + url;
         }
+    }
+
+    private static HashMap<String,String> requestBody(BufferedReader requestInput) throws IOException {
+
+        StringBuffer buffer = new StringBuffer();
+        String string = null;
+        int bodyLength = 0;
+        while (!(string = requestInput.readLine()).equals("")) {
+            buffer.append(string + "");
+            if (string.startsWith("Content-Length:")) {
+                bodyLength = Integer.valueOf(string.substring(string.indexOf(' ') + 1, string.length()));
+            }
+        }
+        char[] body = new char[bodyLength];
+        requestInput.read(body, 0, bodyLength);
+        String requestBody = new String(body);
+        System.out.println("requestBody");
+        System.out.println(requestBody);
+        System.out.println("urlDecoder");
+        String decodedBody = URLDecoder.decode(requestBody,"UTF-8");
+        String[] keysValues = decodedBody.split("&");
+       HashMap<String,String> resultList = new HashMap<>();
+
+       for(int i = 0; i<keysValues.length;i++){
+           resultList.put(keysValues[i].split("=")[0],keysValues[i].split("=")[1]);
+       }
+      return  resultList;
     }
 }

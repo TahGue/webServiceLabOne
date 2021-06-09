@@ -1,3 +1,5 @@
-function hello {
-    return "Hello"
-}
+(
+    function (display){
+        return display;
+    }
+)();
