@@ -42,4 +42,13 @@ public class StudentManager {
         em.close();
         return students;
     };
+
+    public static Student fetchById(int id) {
+        EntityManager em = emf.createEntityManager();
+        Student student = em.createQuery("SELECT c from Student c where c.id=:id", Student.class).setParameter("id",id).getSingleResult();
+        System.out.println("student");
+        System.out.println(student);
+        em.close();
+        return student;
+    }
 }

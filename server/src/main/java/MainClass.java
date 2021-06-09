@@ -16,7 +16,6 @@ import java.util.concurrent.Executors;
 public class MainClass {
     public static void main(String[] args) {
 
-
         ExecutorService executorService = Executors.newCachedThreadPool();
         int port = 5050;
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -92,8 +91,34 @@ public class MainClass {
                 resp.write(data);
                 resp.flush();
                 return;
+
             default:
-                sendStaticFile(resp,url);
+                if(url.contains("?id=")){
+                 HashMap<String,String> params = requestParams(url);
+                  int id = Integer.parseInt(params.get("id"));
+                    System.out.println("id");
+                    System.out.println(id);
+                  Student student = StudentManager.fetchById(id);
+                    System.out.println("id");
+                    System.out.println(id);
+                    System.out.println(student);
+                    if(student.equals(null)){
+                        header = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
+                        resp.write(header.getBytes());
+                        resp.write(Integer.parseInt("Not Found"));
+                        resp.flush();
+                    }else{
+                        String studentJson = gson.toJson(student);
+                        byte[] studentData = studentJson.getBytes(StandardCharsets.UTF_8);
+                        header = "HTTP/1.1 201 CREATED\r\nContent-Type: application/json\r\nContent-length: " + studentData.length + "\r\n\r\n";
+                        resp.write(header.getBytes());
+                        resp.write(studentData);
+                        resp.flush();
+                    }
+                }else{
+                    sendStaticFile(resp,url);
+                }
+
         }
     }
 
@@ -183,4 +208,21 @@ public class MainClass {
        }
       return  resultList;
     }
+
+    private static HashMap<String,String> requestParams(String url) throws IOException {
+
+        String[] urlSplits = url.split("\\?");
+        System.out.println("urlSplits");
+        System.out.println(urlSplits[0]);
+        String paramsString = urlSplits[1];
+        String[] allParams = paramsString.split("&");
+
+        HashMap<String,String> resultList = new HashMap<>();
+
+        for(int i = 0; i<allParams.length;i++){
+            resultList.put(allParams[i].split("=")[0],allParams[i].split("=")[1]);
+        }
+        return  resultList;
+    }
+
 }
