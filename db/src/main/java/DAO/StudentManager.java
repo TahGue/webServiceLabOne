@@ -45,10 +45,10 @@ public class StudentManager {
 
     public static Student fetchById(int id) {
         EntityManager em = emf.createEntityManager();
-        Student student = em.createQuery("SELECT c from Student c where c.id=:id", Student.class).setParameter("id",id).getSingleResult();
+        List<Student> student = em.createQuery("SELECT c from Student c where c.id=:id", Student.class).setParameter("id",id).getResultList();
         System.out.println("student");
         System.out.println(student);
         em.close();
-        return student;
+        return student.size()==1?student.get(0):null ;
     }
 }

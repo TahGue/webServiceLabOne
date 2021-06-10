@@ -91,7 +91,6 @@ public class MainClass {
                 resp.write(data);
                 resp.flush();
                 return;
-
             default:
                 if(url.contains("?id=")){
                  HashMap<String,String> params = requestParams(url);
@@ -102,16 +101,16 @@ public class MainClass {
                     System.out.println("id");
                     System.out.println(id);
                     System.out.println(student);
-                    if(student.equals(null)){
-                        header = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
-                        resp.write(header.getBytes());
-                        resp.write(Integer.parseInt("Not Found"));
+                    if(student== null){
+                      String studentHeader = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
+                        resp.write(studentHeader.getBytes());
+                        resp.write(("Not Found".getBytes()));
                         resp.flush();
                     }else{
                         String studentJson = gson.toJson(student);
                         byte[] studentData = studentJson.getBytes(StandardCharsets.UTF_8);
-                        header = "HTTP/1.1 201 CREATED\r\nContent-Type: application/json\r\nContent-length: " + studentData.length + "\r\n\r\n";
-                        resp.write(header.getBytes());
+                      String successHeader = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-length: " + studentData.length + "\r\n\r\n";
+                        resp.write(successHeader.getBytes());
                         resp.write(studentData);
                         resp.flush();
                     }
