@@ -24,7 +24,6 @@ public class MainClass {
                 Socket client = serverSocket.accept();
                 executorService.submit(() -> routing(client));
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -92,25 +91,23 @@ public class MainClass {
                 resp.flush();
                 return;
             default:
-                if(url.contains("?id=")){
+                if(url.contains("/student?id=")){
                  HashMap<String,String> params = requestParams(url);
                   int id = Integer.parseInt(params.get("id"));
-                    System.out.println("id");
-                    System.out.println(id);
+
                   Student student = StudentManager.fetchById(id);
-                    System.out.println("id");
-                    System.out.println(id);
-                    System.out.println(student);
+
                     if(student== null){
-                      String studentHeader = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
-                        resp.write(studentHeader.getBytes());
-                        resp.write(("Not Found".getBytes()));
+                        header = "HTTP/1.1 404 Not Found\r\n" +
+                                "Content-length: 0\r\n" +
+                                "\r\n";
+                        resp.write(header.getBytes());
                         resp.flush();
                     }else{
                         String studentJson = gson.toJson(student);
                         byte[] studentData = studentJson.getBytes(StandardCharsets.UTF_8);
                       String successHeader = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-length: " + studentData.length + "\r\n\r\n";
-                        resp.write(successHeader.getBytes());
+                        resp.write(successHeader.getBytes(StandardCharsets.UTF_8));
                         resp.write(studentData);
                         resp.flush();
                     }
@@ -130,7 +127,9 @@ public class MainClass {
       String fileName = sections[2];
       System.out.println(fileName);
         if((sections.length!=3) || !sections[1].equals("static")){
-            header = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
+            header = "HTTP/1.1 404 Not Found\n" +
+                    "Content-length: 0\n" +
+                    "\n";
             resp.write(header.getBytes());
             resp.write(("Not Found".getBytes(StandardCharsets.UTF_8)));
             resp.flush();
@@ -138,7 +137,9 @@ public class MainClass {
 
         File f = Path.of("server", "target","web","static",fileName).toFile();
         if (!f.exists() && !f.isDirectory()) {
-            header = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
+            header = "HTTP/1.1 404 Not Found\n" +
+                    "Content-length: 0\n" +
+                    "\n";
             resp.write(header.getBytes());
             resp.write(("Not Found".getBytes(StandardCharsets.UTF_8)));
             resp.flush();
