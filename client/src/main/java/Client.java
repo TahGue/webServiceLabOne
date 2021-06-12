@@ -2,25 +2,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import models.Student;
 
-import java.io.*;
-import java.net.Socket;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 
 public class Client {
-    static String contentType = "";
     static String url = "";
-    static boolean loop = true;
     static Scanner sc = new Scanner(System.in);
-    static String fileExtension = "";
-
 
     public static void main(String[] args) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
@@ -54,8 +48,10 @@ public class Client {
 
         List<Student> students = mapper.readValue(response.body(), new TypeReference<>() {
         });
-       students.forEach(student->System.out.println(student));
+       students.forEach(student->System.out.println("name"+student.getName()+" email "+student.getEmail()+" tel:"+student.getTel()));
     }
+
+
     public static CompletableFuture<Void> POSTRequest(Map<String, String> bodyText) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         String requestBody = objectMapper
