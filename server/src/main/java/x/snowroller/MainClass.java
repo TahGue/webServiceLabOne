@@ -1,3 +1,5 @@
+package x.snowroller;
+
 import DAO.StudentManager;
 import com.google.gson.Gson;
 import models.Student;
@@ -225,5 +227,4 @@ public class MainClass {
         }
         return  resultList;
     }
-
 }

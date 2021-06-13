@@ -19,11 +19,8 @@ public class Client {
     public static void main(String[] args) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
 
-       String url ="";
        System.out.println("Choose a choice");
         System.out.println("1. Fetch students");
-        System.out.println("2. Fetch student by Id");
-        System.out.println("3. insert a new student");
         int choice = sc.nextInt();
         switch(choice){
             case 1:
@@ -34,8 +31,6 @@ public class Client {
 
 
        url = sc.nextLine();
-
-
     }
     public static void printStudents(HttpClient client) throws IOException, InterruptedException {
         HttpRequest getRequest = HttpRequest.newBuilder()
@@ -52,7 +47,7 @@ public class Client {
     }
 
 
-    public static CompletableFuture<Void> POSTRequest(Map<String, String> bodyText) throws IOException {
+    public static CompletableFuture<Void> saveStudent(Map<String, String> bodyText) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         String requestBody = objectMapper
                 .writerWithDefaultPrettyPrinter()
@@ -61,7 +56,7 @@ public class Client {
         HttpRequest request = HttpRequest.newBuilder()
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .uri(URI.create("http://localhost/" + url))
+                .uri(URI.create("http://localhost:5050/"))
                 .build();
 
         return HttpClient.newHttpClient()
