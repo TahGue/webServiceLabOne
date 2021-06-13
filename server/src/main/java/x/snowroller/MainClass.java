@@ -1,3 +1,5 @@
+package x.snowroller;
+
 import DAO.StudentManager;
 import com.google.gson.Gson;
 import models.Student;
@@ -9,13 +11,13 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainClass {
     public static void main(String[] args) {
-
 
         ExecutorService executorService = Executors.newCachedThreadPool();
         int port = 5050;
@@ -25,7 +27,6 @@ public class MainClass {
                 Socket client = serverSocket.accept();
                 executorService.submit(() -> routing(client));
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -93,7 +94,30 @@ public class MainClass {
                 resp.flush();
                 return;
             default:
-                sendStaticFile(resp,url);
+                if(url.contains("/student?id=")){
+                 HashMap<String,String> params = requestParams(url);
+                  int id = Integer.parseInt(params.get("id"));
+
+                  Student student = StudentManager.fetchById(id);
+
+                    if(student== null){
+                        header = "HTTP/1.1 404 Not Found\r\n" +
+                                "Content-length: 0\r\n" +
+                                "\r\n";
+                        resp.write(header.getBytes());
+                        resp.flush();
+                    }else{
+                        String studentJson = gson.toJson(student);
+                        byte[] studentData = studentJson.getBytes(StandardCharsets.UTF_8);
+                      String successHeader = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-length: " + studentData.length + "\r\n\r\n";
+                        resp.write(successHeader.getBytes(StandardCharsets.UTF_8));
+                        resp.write(studentData);
+                        resp.flush();
+                    }
+                }else{
+                    sendStaticFile(resp,url);
+                }
+
         }
     }
 
@@ -106,7 +130,9 @@ public class MainClass {
       String fileName = sections[2];
       System.out.println(fileName);
         if((sections.length!=3) || !sections[1].equals("static")){
-            header = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
+            header = "HTTP/1.1 404 Not Found\n" +
+                    "Content-length: 0\n" +
+                    "\n";
             resp.write(header.getBytes());
             resp.write(("Not Found".getBytes(StandardCharsets.UTF_8)));
             resp.flush();
@@ -114,7 +140,9 @@ public class MainClass {
 
         File f = Path.of("server", "target","web","static",fileName).toFile();
         if (!f.exists() && !f.isDirectory()) {
-            header = "HTTP/1.1 404 Not Found\\r\\nContent-length: 0\\r\\n\\r\\n";
+            header = "HTTP/1.1 404 Not Found\n" +
+                    "Content-length: 0\n" +
+                    "\n";
             resp.write(header.getBytes());
             resp.write(("Not Found".getBytes(StandardCharsets.UTF_8)));
             resp.flush();
@@ -182,6 +210,22 @@ public class MainClass {
            resultList.put(keysValues[i].split("=")[0],keysValues[i].split("=")[1]);
        }
       return  resultList;
+    }
+
+    private static HashMap<String,String> requestParams(String url) throws IOException {
+
+        String[] urlSplits = url.split("\\?");
+        System.out.println("urlSplits");
+        System.out.println(urlSplits[0]);
+        String paramsString = urlSplits[1];
+        String[] allParams = paramsString.split("&");
+
+        HashMap<String,String> resultList = new HashMap<>();
+
+        for(int i = 0; i<allParams.length;i++){
+            resultList.put(allParams[i].split("=")[0],allParams[i].split("=")[1]);
+        }
+        return  resultList;
     }
 }
 
