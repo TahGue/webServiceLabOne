@@ -138,7 +138,7 @@ public class MainClass {
             resp.flush();
         }
 
-        File f = Path.of("server", "target","web","static",fileName).toFile();
+        File f = Path.of( "app","web","static",fileName).toFile();
         if (!f.exists() && !f.isDirectory()) {
             header = "HTTP/1.1 404 Not Found\n" +
                     "Content-length: 0\n" +
